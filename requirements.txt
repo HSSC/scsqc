@@ -1,0 +1,5 @@
+pbr
+nose
+virtualenv
+lxml
+sphinx_rtd_theme

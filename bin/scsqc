@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import sqcbase
+log = sqcbase.logInit()
+log.warn('warning message')
+log.error('error message')
