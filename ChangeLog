@@ -1,4 +1,5 @@
 CHANGES
 =======
 
+* added response and sqcbase modules, tested on el7
 * Initial commit

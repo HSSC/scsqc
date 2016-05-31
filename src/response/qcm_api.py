@@ -31,7 +31,7 @@ from lxml import etree as etree_
 
 
 Validate_simpletypes_ = True
-if sys.version_info.major == 2:
+if sys.version_info[0] == 2:
     BaseStrType_ = basestring
 else:
     BaseStrType_ = str
@@ -356,7 +356,7 @@ except ImportError as exp:
             return dict(((v, k) for k, v in mapping.iteritems()))
         @staticmethod
         def gds_encode(instring):
-            if sys.version_info.major == 2:
+            if sys.version_info[0] == 2:
                 return instring.encode(ExternalEncoding)
             else:
                 return instring
