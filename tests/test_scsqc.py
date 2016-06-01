@@ -24,6 +24,35 @@ class TestSqcBase(TestCase):
         self.assertEqual(os.stat(logf).st_size, 104)
         os.remove(logf)
 
+    ## unit test for config
+    def test_sqcbase_config(self):
+        from sqcbase import config
+
+        inpf = 'config_test.csv'
+        comp = [ {'var1a': 'value1A', 'var2a': 'value2A'}, {'var2b': 'value2B'} ]
+        secs = ['sectionA', 'sectionB']
+
+        ## create an ini file to parse
+        with open(inpf, 'w') as f:
+            f.write('\n;comment A\n[sectionA]\nvar1A: value1A\nvar2A: value2A\n\n[sectionB]\nvar2B: value2B\n\n')
+            f.close()
+
+        ## parse ini file using module and compare sections, vars
+        cfg_parse = config.getConfigParser(inpf)
+        self.assertEqual(cfg_parse.sections(), secs)
+        rep = []
+        for item in cfg_parse.sections():
+            rep.append( config.getConfigSectionMap(cfg_parse, item) )
+        self.assertEqual(rep, comp)
+
+        comp = [{'col2': 'b', 'col3': 'c', 'col1': 'a'}, {'col2': 'e', 'col3': 'f', 'col1': 'd'}, {'col2': 'h', 'col3': 'i', 'col1': 'g'}]
+        with open(inpf, 'w') as f:
+            f.write('#this is a comment\n\ncol1,col2,col3\na, b, c\nd, e, f\ng, h, i\n')
+            f.close()
+        data = config.parseCSV(inpf)
+        self.assertEqual(data, comp)
+        os.remove(inpf)
+
     def test_sqcbase_cmdline(self):
         from sqcbase.command_line import main
         main()
@@ -74,3 +103,43 @@ class TestReponse(TestCase):
         except Exception, errmsg:
             log.error(errmsg)
 
+    def test_transfer_sftp_aput(self):
+
+        from transfer import sftp_transfer
+        host='hssc-cdwr3-hsie-d.clemson.edu'
+        port=22
+        usern='transfer'
+        keyfile= os.path.join(os.getcwd(), 'roles/pyenv/files/hsie-d.key')
+        filename = 'BigFILE'
+        filepath = os.path.join(os.getcwd(), filename)
+        os.system('dd if=/dev/zero of=%s bs=40960 count=1 iflag=fullblock status=none' % filepath)
+        handle, transport = sftp_transfer.sftp_connect(host, port, usern, keyfile)
+        if not hasattr(self, 'assertIsNotNone'):
+            self.assertNotEqual(handle, None)
+        else:
+            self.assertIsNotNone(handle)
+        sftp_transfer.sftp_put(handle, filename, ('/home/%s/testing/large/file/%s' % (usern, filename) ))
+        os.remove(filepath)
+        transport.close()
+
+    def test_transfer_sftp_bget(self):
+
+        from transfer import sftp_transfer
+        host='hssc-cdwr3-hsie-d.clemson.edu'
+        port=22
+        usern='transfer'
+        keyfile= os.path.join(os.getcwd(), 'roles/pyenv/files/hsie-d.key')
+        filename = 'BigFILE'
+        filepath = '/home/%s/testing/large/file/%s' % (usern, filename)
+        handle, transport = sftp_transfer.sftp_connect(host, port, usern, keyfile)
+        if not hasattr(self, 'assertIsNotNone'):
+            self.assertNotEqual(handle, None)
+        else:
+            self.assertIsNotNone(handle)
+        sftp_transfer.sftp_get(handle, filepath , filename.lower())
+        os.remove(filename.lower())
+        transport.close()
+
+
+if __name__ == '__main__':
+    unittest.main(failfast=True, exit=False)

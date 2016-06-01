@@ -32,6 +32,7 @@
     - git
     - python-pip
     - python-virtualenv
+    - python-paramiko
     - libxslt-devel 
     - libxml2-devel
 
