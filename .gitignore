@@ -58,5 +58,8 @@ docs/_build/
 # PyBuilder
 target/
 
+# vagrant
+.vagrant/
+
 #Ipython Notebook
 .ipynb_checkpoints
