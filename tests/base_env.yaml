@@ -19,6 +19,8 @@
   bootstrap: bin/vagrant_script.sh
 
 
+  # rchouinard/oracle-65-x64
+  # boxcutter/ol67
 - name: oracle-linux65
   enabled: false
   hostname: oracle-linux65-x64
@@ -30,6 +32,13 @@
   synced_dirs:
     - local: ../../build
       remote: /build
+      options:
+        :create: true
+        :owner: vagrant
+        :group: vagrant
+        :mount_options: ['dmode=0755', 'fmode=0644']
+    - local: roles/pyenv/files
+      remote: /files
       options:
         :create: true
         :owner: vagrant
@@ -48,6 +57,13 @@
   synced_dirs:
     - local: ../../build
       remote: /build
+      options:
+        :create: true
+        :owner: vagrant
+        :group: vagrant
+        :mount_options: ['dmode=0755', 'fmode=0644']
+    - local: roles/pyenv/files
+      remote: /files
       options:
         :create: true
         :owner: vagrant

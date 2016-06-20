@@ -1,6 +1,8 @@
 CHANGES
 =======
 
+* package, stored procs and schema tables for sqc project
+* added SFTP module for file transfer - el7/el65 tested
 * mods to qcm_api to work with el65/py26, el7/py27
 * added response and sqcbase modules, tested on el7
 * Initial commit

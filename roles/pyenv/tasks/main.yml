@@ -26,7 +26,11 @@
   tags:
     - epel
 
-- name: PyEnv | Install packages required to run the examples
+- name: PyEnv | Install Oracle instantclient
+  yum: name="{{ item.filename }}" state=installed
+  with_items: "{{ instantclient_oracle_packages }}"
+
+- name: PyEnv | Install packages required to run sqc
   yum: name={{ item }} state=installed
   with_items:
     - git
@@ -44,7 +48,8 @@
 
 - name: PyEnv | install required python dependencies
   sudo: true
-  pip: requirements=/vagrant/requirements.txt executable=pip virtualenv="{{ virtualenv_path }}"
+  pip: requirements=/vagrant/requirements.txt executable=pip 
+#virtualenv="{{ virtualenv_path }}"
 
 
 # Create each user with home directory on the correct patition, and add to group.

@@ -2,4 +2,5 @@ pbr
 nose
 virtualenv
 lxml
+cx_Oracle
 sphinx_rtd_theme
