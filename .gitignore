@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+## oracle client rpms and wallet files to exclude
+roles/pyenv/files/*.rpm
+roles/pyenv/files/scsqc.wxt/[c,e]wallet.*
+
 # Distribution / packaging
 .Python
 env/

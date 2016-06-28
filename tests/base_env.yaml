@@ -21,10 +21,11 @@
 
   # rchouinard/oracle-65-x64
   # boxcutter/ol67
-- name: oracle-linux65
+  # uclbioresource/oracle68
+- name: oracle-linux68
   enabled: false
-  hostname: oracle-linux65-x64
-  box: rchouinard/oracle-65-x64
+  hostname: oracle-linux68-x64
+  box: uclbioresource/oracle68
   resource:
     memory: 2048
     cpus: 1
@@ -47,7 +48,7 @@
   bootstrap: bin/vagrant_script.sh
 
 - name: oracle-linux7
-  enabled: true
+  enabled: false
   hostname: oracle-linux7-x64
   box: a-h/oracle_linux_7
   resource:
