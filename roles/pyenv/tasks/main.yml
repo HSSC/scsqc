@@ -36,9 +36,12 @@
     - git
     - python-pip
     - python-virtualenv
-    - python-paramiko
-    - libxslt-devel 
+    - libffi
+    - libffi-devel
     - libxml2-devel
+    - libxslt-devel
+    - python-lxml
+    - python-paramiko
 
 #- name: Install packages required to run the examples
 #  yum: name=python-pip state=installed

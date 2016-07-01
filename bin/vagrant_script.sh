@@ -1,10 +1,21 @@
 #!/bin/sh
-echo " --> Executing custom shell script in vagrant env"
 
-echo "Hello from $0"
+echo "------------------------------------------------"
+echo "--> Executing custom shell script in vagrant env"
+
+echo -ne '\n\n--> Checking environment\n'
 python -V &> /dev/null && python -mplatform
+echo -ne '\n--> Architecture\n'
 arch
-#. ~vagrant/venv/bin/activate 
+
+echo -ne '\n--> '
+python -V 
+
+## virtual env does not play nicely with cx_Oracle/paramiko (why?)
+##. ~vagrant/venv/bin/activate 
+
+echo -ne '\n--> Building and Installing Software\n'
 cd /vagrant && sudo python setup.py test && sudo python setup.py install
-/usr/bin/scsqc -c /files/my.conf
+echo -ne '\n--> Running Integration Test\n'
+/usr/bin/scsqc -c /files/qcmetrix.conf
 echo "------------------------------------------------"

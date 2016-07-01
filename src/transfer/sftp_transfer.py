@@ -1,7 +1,9 @@
 import paramiko
 import sys
 import os
+import StringIO
 
+transfer_rate = StringIO.StringIO()
 
 def sftp_connect(host, port, user, keyfile=None):
     sftp_handle = None
@@ -38,19 +40,18 @@ def sftp_mkdir_p(sftp_handle, remote_directory):
 
 
 def sftp_progress(bytes_done, bytes_todo):
-    sys.stderr.write('\r')
-    sys.stderr.write( 'transferred {0} bytes out of {1} '.format(bytes_done, bytes_todo))
-    sys.stderr.flush()
+    transfer_rate.write('\r')
+    transfer_rate.write( 'transferred {0} bytes out of {1} '.format(bytes_done, bytes_todo))
+    transfer_rate.flush()
 
 
-def sftp_put(sftp_handle, local_path, remote_path, create_remote=True):
-
-    if create_remote:
-        dest_dir = os.path.dirname(remote_path)
-        sftp_mkdir_p(sftp_handle, dest_dir)
-    else:
-        d_stat = sftp_handle.lstat(remote_path)
-    sftp_handle.put(local_path, remote_path)
+def sftp_put(sftp_handle, local_path, remote_path):
+    transfer_rate = StringIO.StringIO()
+    sftp_handle.put(local_path, remote_path) ## , callback=sftp_progress)
+    file_stat = sftp_handle.lstat(remote_path)
+    bytes_transferred = transfer_rate.getvalue()
+    transfer_rate.close()
+    return file_stat, bytes_transferred
 
 
 def sftp_get(sftp_handle, remote_path, local_path, create_local=False):
