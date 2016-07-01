@@ -48,7 +48,7 @@
   bootstrap: bin/vagrant_script.sh
 
 - name: oracle-linux7
-  enabled: false
+  enabled: true
   hostname: oracle-linux7-x64
   box: a-h/oracle_linux_7
   resource:
