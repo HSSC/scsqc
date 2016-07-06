@@ -32,4 +32,13 @@ prompt "QCM01: creating table qcm_case";
 
 @qcm_case_ddl.sql
 /
+
+prompt "QCM01: creating table qcm_proc_codes";
+@qcm_proc_codes_ddl.sql
+/
+
+prompt "QCM01: inserting data into qcm_proc_codes";
+@qcm_proc_codes_data.sql
+/
+
 prompt "--> done "
