@@ -6,6 +6,7 @@ import cx_Oracle
 import csv
 import paramiko
 import datetime
+#from dateutil import tz
 
 ## local imports
 from sqcbase import config
@@ -92,13 +93,16 @@ class sqc_driver:
 
         ## set parameters for stored procedure
         now = self.db.now()
+        now = datetime.date(2016, 04, 01)
         nsite = 1007;
-        batch_id = 20
+        batch_id = 99999999
         ## call stored procedure with parameters
+        print '--> Calling "HSSC_ETL.PKG_SCSQC_QCM.ex_tr_qcm(%s,%s,%s,cur)' % (now, nsite, batch_id)
         proc_output = self.db.get_mcur().callproc( "HSSC_ETL.PKG_SCSQC_QCM.ex_tr_qcm", [now, nsite, batch_id, self.ocur] )
-        batch_id = proc_output[2]
+        self.batch_id = proc_output[2]
 
         ## get description of columnar payload
+        skip_columns = [ 'IDX' ]
         head = self.ocur.description
 
         ## sniff csv header from qc-mitt
@@ -115,40 +119,84 @@ class sqc_driver:
         ## process rows and serialise
         ## mapping between payload columns and sniffed column header is 1-to-1
         ## any additional columns in payload will be a part of qcm_case (internal use only)
-        rows = self.ocur.fetchall()
-        self.pfile = 'qcm_site-%s_batch-%05d.csv' % (nsite, batch_id)
+
+        self.pfile = 'qcm_site-%s_batch-%05d.csv' % (nsite, self.batch_id)
         f = open(self.pfile, "w")
         writer = csv.DictWriter(f, lineterminator="\n", quoting=csv.QUOTE_NONNUMERIC, fieldnames=self.qcm_dict)
         writer.writeheader()
-        in_qcm_case = ""
-        in_qcm_case += (' INSERT ALL \n')
-        for row in rows:
-            qcm_payload = dict()
-            qcm_case = dict()
-            in_qcm_case += " INTO HSSC_ETL.QCM_CASE ( "
-            for i in xrange(len(head)):
-              if (head[i][0] in self.qcm_dict):
-                qcm_payload[head[i][0]] = self.transform(row[i])
-              else:
-                qcm_case[head[i][0]] = self.transform(row[i])
-            in_qcm_case += ( ", ".join( [ "%s" % key for key in qcm_case ] ))
-            in_qcm_case += " ) VALUES ( "
-            in_qcm_case += ( ", ".join( [ "%s" % qcm_case[key] for key in qcm_case ] ))
-            in_qcm_case += ")\n"
-            writer.writerow(qcm_payload)
-        in_qcm_case += "SELECT * FROM dual"
-        self.db.get_mcur().execute(in_qcm_case)
+
+        meta_numrows = 0
+        batch_count = 0
+        while True:
+            batch_count += 1
+            rows = self.ocur.fetchmany(459)
+            if rows == [] or batch_count > 2:
+                break
+            meta_numrows += len(rows)
+            in_qcm_case = ""
+            in_qcm_case += (' INSERT ALL \n')
+            for row in rows:
+                qcm_payload = dict()
+                qcm_case = dict()
+                in_qcm_case += " INTO HSSC_ETL.QCM_CASE ( "
+                for i in xrange(len(head)):
+                  if (head[i][0] in self.qcm_dict):
+                    qcm_payload[head[i][0]] = self.transform(row[i])
+                  else:
+                    if head[i][0] in skip_columns:
+                      continue
+                    qcm_case[head[i][0]] = self.transform(row[i])
+                in_qcm_case += ( ", ".join( [ "%s" % key for key in qcm_case ] ))
+                in_qcm_case += " ) VALUES ( "
+                in_qcm_case += ( ", ".join( [ "%s" % qcm_case[key] for key in qcm_case ] ))
+                in_qcm_case += ")\n"
+                writer.writerow(qcm_payload)
+                if meta_numrows % 100 == 0 and meta_numrows > 0:
+                    in_qcm_case += "SELECT * FROM dual"
+                    self.db.get_mcur().execute(in_qcm_case)
+                    self.db.get_conn().commit()
+                    in_qcm_case = (' INSERT ALL \n')
+
+            in_qcm_case += "SELECT * FROM dual"
+        if meta_numrows > 0:
+                self.db.get_mcur().execute(in_qcm_case)
+                self.db.get_conn().commit()
+
+
+        ## all qcm_case records have been successfully populated at this point
+        val = 0
+        st_qcm = self.db.get_mcur().callfunc( "HSSC_ETL.PKG_SCSQC_QCM.GET_CONSTANT", val, ['PKG_SCSQC_QCM.C_STAT_QCM_CASE'] )
+        up_qcm_meta =  'UPDATE HSSC_ETL.QCM_META SET BATCH_STATUS = \'%s\', QCM_DAT_NREC = %d WHERE BATCH_ID = %d' % (st_qcm, meta_numrows, self.batch_id)
+        self.db.get_mcur().execute(up_qcm_meta)
         self.db.get_conn().commit()
+
+        f.close()
 
         ## qcm_cntrl insert
         in_qcm_cntrl = "INSERT INTO HSSC_ETL.QCM_CNTRL (LOCAL_CASE_ID, BATCH_ID) "
         in_qcm_cntrl += "SELECT LOCAL_CASE_ID, BATCH_ID FROM HSSC_ETL.QCM_CASE WHERE BATCH_ID = "
-        in_qcm_cntrl += str(batch_id)
-
+        in_qcm_cntrl += str(self.batch_id)
         self.db.get_mcur().execute(in_qcm_cntrl)
         self.db.get_conn().commit()
 
-        f.close()
+        ## all qcm_cntrl records have been added at this point
+        val = 0
+        st_qcm = self.db.get_mcur().callfunc( "HSSC_ETL.PKG_SCSQC_QCM.GET_CONSTANT", val, ['PKG_SCSQC_QCM.C_STAT_QCM_CNTRL'] )
+        up_qcm_meta =  'UPDATE HSSC_ETL.QCM_META SET BATCH_STATUS = \'%s\' WHERE BATCH_ID = %d' % (st_qcm, self.batch_id)
+        self.db.get_mcur().execute(up_qcm_meta)
+        self.db.get_conn().commit()
+
+        ## db transaction completed
+
+        tx_compl = datetime.datetime.now()
+        #from_zone = tz.tzutc()
+        #to_zone = tz.tzlocal()
+        #tx_compl.replace(tzinfo=from_zone)
+        up_qcm_meta =  'UPDATE HSSC_ETL.QCM_META SET TX_COMPL = :t WHERE BATCH_ID = %d' % (self.batch_id)
+        self.db.get_mcur().execute(up_qcm_meta, {'t':tx_compl})
+        self.db.get_conn().commit()
+
+        ##cursor goes out of scope here. extract/update tables qcm_meta, qcm_cntrl, qcm_case done
 
     def transfer(self):
         from transfer import sftp_transfer
@@ -165,9 +213,26 @@ class sqc_driver:
             t_stat, t_rate = sftp_transfer.sftp_put(handle, filename, remote_path)
             trn_t1 = datetime.datetime.now()
             trn_dt = trn_t1 - trn_t0
-            print '--> Transferred %s with size %.1f bytes in %.2f ms' % ( self.pfile, t_stat.st_size, trn_dt.microseconds*1.E-3)
+            meta_rate = trn_dt.microseconds*1.E-3
+            meta_size = t_stat.st_size
+            meta_modt = datetime.datetime.fromtimestamp(t_stat.st_mtime)
+            print '--> Transferred %s with size %.1f bytes in %.2f ms' % ( self.pfile, meta_size, meta_rate)
             print '--> Last Modified time: ', \
-                       datetime.datetime.fromtimestamp(t_stat.st_mtime).strftime('%Y/%m/%d %H:%M:%S')
+                       meta_modt.strftime('%YYYY/%m/%d %H:%M:%S')
+
+            ## qcm_meta update
+            in_qcm_meta = "UPDATE HSSC_ETL.QCM_META SET QCM_DAT_FNAME = \'%s\', QCM_DAT_SIZE = %.1f " % (self.pfile, meta_size)
+            #in_qcm_meta += ", QCM_DAT_RATE = %.2f WHERE BATCH_ID = %d" % (meta_rate, self.batch_id) #, QCM_DAT_MOD = to_date( \'%s\', \'YYYY-MM-DD HH:MI:SS\') WHERE BATCH_ID = " (
+            in_qcm_meta += ", QCM_DAT_RATE = %.2f, QCM_DAT_MOD = :t WHERE BATCH_ID = %d" % (meta_rate, self.batch_id)
+            self.db.get_mcur().execute(in_qcm_meta, {'t':meta_modt})
+            self.db.get_conn().commit()
+
+            ## all qcm_cntrl records have been added at this point
+            val = 0
+            st_qcm = self.db.get_mcur().callfunc( "HSSC_ETL.PKG_SCSQC_QCM.GET_CONSTANT", val, ['PKG_SCSQC_QCM.C_STAT_QCM_FTP'] )
+            up_qcm_meta =  'UPDATE HSSC_ETL.QCM_META SET BATCH_STATUS = \'%s\' WHERE BATCH_ID = %d' % (st_qcm, self.batch_id)
+            self.db.get_mcur().execute(up_qcm_meta)
+            self.db.get_conn().commit()
         except paramiko.SSHException, err:
             sys.stderr.write('ERROR: %s\n' % str(err))
             traceback.print_exc()
@@ -184,7 +249,6 @@ class sqc_driver:
         self.transfer()
         print '--> Finished at : ', self.db.now().strftime('%Y/%m/%d %H:%M:%S')
         del(self.db)
-
 
 
 

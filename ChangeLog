@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* added pl/sql scripts for automatic loading in prod
 * payload details included
 * added el67 support, tested sqcdriver and added basic config for driver
 * package, stored procs and schema tables for sqc project

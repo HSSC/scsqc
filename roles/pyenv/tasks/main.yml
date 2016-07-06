@@ -36,6 +36,7 @@
     - git
     - python-pip
     - python-virtualenv
+    - python-dateutil
     - libffi
     - libffi-devel
     - libxml2-devel
