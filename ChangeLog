@@ -1,6 +1,9 @@
 CHANGES
 =======
 
+* minor mod to logger to accept verbose output
+* added logging and config
+* including ep changes for payload proc
 * added pl/sql scripts for automatic loading in prod
 * payload details included
 * added el67 support, tested sqcdriver and added basic config for driver

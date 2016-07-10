@@ -1,12 +1,11 @@
 
 import os
 import sys
-import traceback
 import cx_Oracle
 import csv
 import paramiko
 import datetime
-#from dateutil import tz
+import logging
 
 ## local imports
 from sqcbase import config
@@ -17,20 +16,20 @@ from transfer import sftp_transfer
 
 class qcm_db:
 
-    def __init__(self, options):
+    def __init__(self, db_options, log):
         self.ocur = None ## secondary cursor
         self.mcur = None ## main cursor
         self.db = None ## database connection object
-        self.conn_str = options["app"]
-        self.tnsenv = options["tns_env"]
+        self.opts = db_options
+        self.log = log
+        self.conn_str = self.opts["app"]
         try:
-            os.environ['TNS_ADMIN'] = self.tnsenv
+            os.environ['TNS_ADMIN'] = self.opts["tns_env"]
             self.db = cx_Oracle.connect(self.conn_str)
             self.mcur = self.db.cursor()
 
         except cx_Oracle.DatabaseError, err:
-            sys.stderr.write('ERROR: %s\n' % str(err))
-            traceback.print_exc()
+            self.log.exception('ERROR: %s\n' % str(err), exc_info=1)
 
     def now(self):
         q_test = 'select sysdate from dual';
@@ -80,6 +79,13 @@ class sqc_driver:
             traceback.print_exc()
             sys.exit(err.errno)
 
+
+        self.db_opts = config.getConfigSectionMap( self.config_vars, "db" )
+        self.pl_opts = config.getConfigSectionMap( self.config_vars, "payload" )
+        self.tr_opts = config.getConfigSectionMap( self.config_vars, "sftp" )
+        self.log = logger.logInit(self.options.logLevel, self.pl_opts['log_path'], type(self).__name__)
+        self.db = qcm_db(self.db_opts, self.log)
+
     def transform(self, item):
         if isinstance(item, datetime.datetime):
             item = item.strftime('%Y-%m-%d')
@@ -92,13 +98,44 @@ class sqc_driver:
         self.ocur = self.db.get_ocur()
 
         ## set parameters for stored procedure
-        now = self.db.now()
-        now = datetime.date(2016, 04, 01)
-        nsite = 1007;
-        batch_id = 99999999
+        base_time = datetime.datetime.strptime('000001', '%H%M%S').time()
+        proc_tx_start = datetime.datetime.combine(
+                              (datetime.date.today() - datetime.timedelta(days=int(self.pl_opts['ndays_txstart'])) ), base_time )
+        proc_site_id = int(self.pl_opts['site_id'])
+        val = 0
+        st_qcm = self.db.get_mcur().callfunc( "HSSC_ETL.PKG_SCSQC_QCM.GET_CONSTANT", val, ['PKG_SCSQC_QCM.C_STAT_QCM_FTP'] )
+        sel_tx_start = "SELECT qm.TX_START FROM HSSC_ETL.QCM_META qm WHERE "
+        sel_tx_start += "QCM_SITE = \'%d\' and BATCH_STATUS = \'%s\'" % ( proc_site_id, st_qcm)
+        sel_tx_start += " AND NOT EXISTS ( SELECT 1 FROM HSSC_ETL.QCM_META qm2 WHERE qm2.TX_START > qm.TX_START "
+        sel_tx_start += " AND qm.QCM_SITE = qm2.QCM_SITE AND qm2.BATCH_STATUS = \'%s\' )" % st_qcm
+
+        if self.options.logLevel == 'VERBOSE':
+            self.log.log(logging.INFO, sel_tx_start)
+        proc_batch_id = 99999999 ## we will get the batch_id from the stored proc, just initialize with dummy (large) value
+        proc_start_days = int(self.pl_opts['ndays_max_txstart'])
+
+        ## get the start date for extraction
+        try:
+            ## get the last extraction date
+            pst_cur = self.db.get_mcur().execute(sel_tx_start)
+            txstart = pst_cur.fetchone()
+            if txstart != None:
+                if len(txstart) > 0:
+                    txstart = txstart[0]
+                    timenow = datetime.datetime.now()
+                    delta = timenow - txstart
+                    ## expect extraction to occur daily
+                    if delta.days >= 1:
+                        proc_tx_start = txstart
+            else:
+                proc_tx_start =  datetime.datetime.combine( datetime.date(2016, 04, 01), base_time )
+        ## if we can't get start date for last extraction, just use default
+        except cx_Oracle.DatabaseError, err:
+            pass
+
         ## call stored procedure with parameters
-        print '--> Calling "HSSC_ETL.PKG_SCSQC_QCM.ex_tr_qcm(%s,%s,%s,cur)' % (now, nsite, batch_id)
-        proc_output = self.db.get_mcur().callproc( "HSSC_ETL.PKG_SCSQC_QCM.ex_tr_qcm", [now, nsite, batch_id, self.ocur] )
+        self.log.debug( 'Calling procedure with p_trans_t0 = %s for p_site_id = %s' % (proc_tx_start, proc_site_id))
+        proc_output = self.db.get_mcur().callproc( "HSSC_ETL.PKG_SCSQC_QCM.ex_tr_qcm", [proc_tx_start, proc_site_id, proc_batch_id, self.ocur, proc_start_days] )
         self.batch_id = proc_output[2]
 
         ## get description of columnar payload
@@ -106,31 +143,47 @@ class sqc_driver:
         head = self.ocur.description
 
         ## sniff csv header from qc-mitt
-        with open ('/files/SCSQC_QCMitt_Empty.csv', 'r') as f:
-            dialect = csv.Sniffer().sniff(f.readline())
-            f.seek(0)
-            reader = csv.reader(f, dialect)
-            ## we know we need only first row (headers) from qc-mitt
-            for item in reader:
-                self.qcm_dict = item
-                break
-            f.close()
+        try:
+            with open (self.pl_opts['qcm_header_path'], 'r') as f:
+                dialect = csv.Sniffer().sniff(f.readline())
+                f.seek(0)
+                reader = csv.reader(f, dialect)
+                ## we know we need only first row (headers) from qc-mitt
+                for item in reader:
+                    self.qcm_dict = item
+                    break
+                f.close()
+        except IOError, err:
+            self.log.error('ERROR: reading template file %s\n%s\n' % ( self.pl_opts['qcm_header_path'] , str(err)))
+            self.log.exception("exception:", exc_info=1)
+            sys.exit(err.errno)
+
 
         ## process rows and serialise
         ## mapping between payload columns and sniffed column header is 1-to-1
         ## any additional columns in payload will be a part of qcm_case (internal use only)
-
-        self.pfile = 'qcm_site-%s_batch-%05d.csv' % (nsite, self.batch_id)
-        f = open(self.pfile, "w")
-        writer = csv.DictWriter(f, lineterminator="\n", quoting=csv.QUOTE_NONNUMERIC, fieldnames=self.qcm_dict)
-        writer.writeheader()
+        fc_time = datetime.datetime.now().strftime('%Y%m%d')
+        self.pfile = self.pl_opts['csv_file_prefix'] + ( 'site_%s_%s_%05d.csv' % (proc_site_id, fc_time, self.batch_id) )
+        self.ppath = self.pl_opts['csv_local_path']
+        try:
+            fpath = os.path.join(self.ppath, self.pfile)
+            f = open(fpath, "w")
+            writer = csv.DictWriter(f, lineterminator="\n", quoting=csv.QUOTE_NONNUMERIC, fieldnames=self.qcm_dict)
+            writer.writeheader()
+        except IOError, err:
+            self.log.error('ERROR: reading template file %s\n%s\n' % ( fpath , str(err)), exc_info=1)
+            sys.exit(err.errno)
 
         meta_numrows = 0
         batch_count = 0
+        batch_size = int(self.pl_opts['batch_size'])
+        batch_maxcnt = int(self.pl_opts['batch_maxnum'])
         while True:
             batch_count += 1
-            rows = self.ocur.fetchmany(459)
-            if rows == [] or batch_count > 2:
+            rows = self.ocur.fetchmany(batch_size)
+            if rows == [] or batch_count > batch_maxcnt:
+                if batch_count > batch_maxcnt:
+                    log.warn('Too many rows. Exceeded %d batches of %d records' % (batch_count, batch_size))
                 break
             meta_numrows += len(rows)
             in_qcm_case = ""
@@ -167,6 +220,8 @@ class sqc_driver:
         val = 0
         st_qcm = self.db.get_mcur().callfunc( "HSSC_ETL.PKG_SCSQC_QCM.GET_CONSTANT", val, ['PKG_SCSQC_QCM.C_STAT_QCM_CASE'] )
         up_qcm_meta =  'UPDATE HSSC_ETL.QCM_META SET BATCH_STATUS = \'%s\', QCM_DAT_NREC = %d WHERE BATCH_ID = %d' % (st_qcm, meta_numrows, self.batch_id)
+        if self.options.logLevel == 'VERBOSE':
+            self.log.log(logging.INFO, up_qcm_meta)
         self.db.get_mcur().execute(up_qcm_meta)
         self.db.get_conn().commit()
 
@@ -176,6 +231,8 @@ class sqc_driver:
         in_qcm_cntrl = "INSERT INTO HSSC_ETL.QCM_CNTRL (LOCAL_CASE_ID, BATCH_ID) "
         in_qcm_cntrl += "SELECT LOCAL_CASE_ID, BATCH_ID FROM HSSC_ETL.QCM_CASE WHERE BATCH_ID = "
         in_qcm_cntrl += str(self.batch_id)
+        if self.options.logLevel == 'VERBOSE':
+            self.log.log(logging.INFO, in_qcm_cntrl)
         self.db.get_mcur().execute(in_qcm_cntrl)
         self.db.get_conn().commit()
 
@@ -183,72 +240,72 @@ class sqc_driver:
         val = 0
         st_qcm = self.db.get_mcur().callfunc( "HSSC_ETL.PKG_SCSQC_QCM.GET_CONSTANT", val, ['PKG_SCSQC_QCM.C_STAT_QCM_CNTRL'] )
         up_qcm_meta =  'UPDATE HSSC_ETL.QCM_META SET BATCH_STATUS = \'%s\' WHERE BATCH_ID = %d' % (st_qcm, self.batch_id)
+        if self.options.logLevel == 'VERBOSE':
+            self.log.log(logging.INFO, up_qcm_meta)
         self.db.get_mcur().execute(up_qcm_meta)
         self.db.get_conn().commit()
 
         ## db transaction completed
 
         tx_compl = datetime.datetime.now()
-        #from_zone = tz.tzutc()
-        #to_zone = tz.tzlocal()
-        #tx_compl.replace(tzinfo=from_zone)
         up_qcm_meta =  'UPDATE HSSC_ETL.QCM_META SET TX_COMPL = :t WHERE BATCH_ID = %d' % (self.batch_id)
         self.db.get_mcur().execute(up_qcm_meta, {'t':tx_compl})
+        if self.options.logLevel == 'VERBOSE':
+            self.log.log(logging.INFO, up_qcm_meta)
         self.db.get_conn().commit()
 
         ##cursor goes out of scope here. extract/update tables qcm_meta, qcm_cntrl, qcm_case done
 
     def transfer(self):
-        from transfer import sftp_transfer
-        host='hssc-cdwr3-hsie-d.clemson.edu'
-        port=22
-        usern='transfer'
-        keyfile= os.path.join('/files', 'hsie-d.key')
-        filename = self.pfile
-        remote_path = '/home/%s/testing/large/file/%s' % (usern, filename)
-        filepath = os.path.join(os.getcwd(), filename)
+
+        ## get configuration
+        remote_paths = self.tr_opts['remotedirs'].split(',')
+        host= self.tr_opts['host']
+        port= int(self.tr_opts['port'])
+        keyfile= self.tr_opts['pubkey']
+        local_fpath = os.path.join(self.ppath, self.pfile)
         try:
             trn_t0 = datetime.datetime.now()
-            handle, transport = sftp_transfer.sftp_connect(host, port, usern, keyfile)
-            t_stat, t_rate = sftp_transfer.sftp_put(handle, filename, remote_path)
+            handle, transport = sftp_transfer.sftp_connect(self.tr_opts['host'], self.tr_opts['port'], self.tr_opts['user'], keyfile)
+            t_stat = paramiko.sftp_attr.SFTPAttributes()
+            for idir in remote_paths:
+                remote_fpath = os.path.join(idir.strip(), self.pfile)
+                t_stat, t_rate = sftp_transfer.sftp_put(handle, local_fpath, remote_fpath)
             trn_t1 = datetime.datetime.now()
             trn_dt = trn_t1 - trn_t0
             meta_rate = trn_dt.microseconds*1.E-3
             meta_size = t_stat.st_size
             meta_modt = datetime.datetime.fromtimestamp(t_stat.st_mtime)
-            print '--> Transferred %s with size %.1f bytes in %.2f ms' % ( self.pfile, meta_size, meta_rate)
-            print '--> Last Modified time: ', \
-                       meta_modt.strftime('%YYYY/%m/%d %H:%M:%S')
+            self.log.info('Transferred %s with size %.1f bytes in %.2f ms' % ( self.pfile, meta_size, meta_rate))
+            self.log.info('Payload file last modified at %s' % meta_modt) #.strftime('%Y/%m/%d %H:%M:%S'))
 
-            ## qcm_meta update
-            in_qcm_meta = "UPDATE HSSC_ETL.QCM_META SET QCM_DAT_FNAME = \'%s\', QCM_DAT_SIZE = %.1f " % (self.pfile, meta_size)
-            #in_qcm_meta += ", QCM_DAT_RATE = %.2f WHERE BATCH_ID = %d" % (meta_rate, self.batch_id) #, QCM_DAT_MOD = to_date( \'%s\', \'YYYY-MM-DD HH:MI:SS\') WHERE BATCH_ID = " (
-            in_qcm_meta += ", QCM_DAT_RATE = %.2f, QCM_DAT_MOD = :t WHERE BATCH_ID = %d" % (meta_rate, self.batch_id)
-            self.db.get_mcur().execute(in_qcm_meta, {'t':meta_modt})
-            self.db.get_conn().commit()
-
-            ## all qcm_cntrl records have been added at this point
+            ## sftp transfer successful
             val = 0
             st_qcm = self.db.get_mcur().callfunc( "HSSC_ETL.PKG_SCSQC_QCM.GET_CONSTANT", val, ['PKG_SCSQC_QCM.C_STAT_QCM_FTP'] )
-            up_qcm_meta =  'UPDATE HSSC_ETL.QCM_META SET BATCH_STATUS = \'%s\' WHERE BATCH_ID = %d' % (st_qcm, self.batch_id)
-            self.db.get_mcur().execute(up_qcm_meta)
+            up_qcm_meta = "UPDATE HSSC_ETL.QCM_META SET "
+            up_qcm_meta += 'TX_START=(SELECT CAST(FROM_TZ(CAST( '
+            up_qcm_meta += '(SELECT TX_START from HSSC_ETL.QCM_META WHERE BATCH_ID = %d) AS TIMESTAMP), \'EST\') ' % self.batch_id
+            up_qcm_meta += 'AT TIME ZONE \'UTC\' AS DATE) FROM DUAL) '
+            up_qcm_meta += ", QCM_DAT_FNAME = \'%s\', QCM_DAT_SIZE = %.1f " % (self.pfile, meta_size)
+            up_qcm_meta += ", QCM_DAT_RATE = %.2f, QCM_DAT_MOD = :t, BATCH_STATUS = \'%s\' WHERE BATCH_ID = %d" % (meta_rate, st_qcm, self.batch_id)
+            if self.options.logLevel == 'VERBOSE':
+                self.log.log(logging.INFO, up_qcm_meta)
+            self.db.get_mcur().execute(up_qcm_meta, {'t':meta_modt})
             self.db.get_conn().commit()
+
         except paramiko.SSHException, err:
-            sys.stderr.write('ERROR: %s\n' % str(err))
-            traceback.print_exc()
+            self.log.exception('ERROR: %s\n' % str(err))
         finally:
             #os.remove(filepath)
             transport.close()
 
 
     def run(self):
-        self.db = qcm_db( config.getConfigSectionMap( self.config_vars, "db" ))
-        print '--> Starting Payload Extraction : ', self.db.now().strftime('%Y/%m/%d %H:%M:%S')
+        self.log.info('Starting Payload Extraction')
         self.extract()
-        print '--> Starting Payload Transfer : ', self.db.now().strftime('%Y/%m/%d %H:%M:%S')
+        self.log.info('Starting Payload Transfer')
         self.transfer()
-        print '--> Finished at : ', self.db.now().strftime('%Y/%m/%d %H:%M:%S')
+        self.log.info('Processing complete')
         del(self.db)
-
 
 

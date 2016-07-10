@@ -7,10 +7,12 @@ import logging, os, sys
 ## output: file handle to logger
 #---------------------------------------------------
 
-def logInit(outputLocation="stdout", maxmb=5):
+def logInit(level, outputLocation="stdout", modulename="root", maxmb=5):
     from logging import handlers
-    root = logging.getLogger()
-    root.setLevel(logging.INFO)
+    root = logging.getLogger(modulename)
+    if level == 'VERBOSE' or level == None:
+        level = 'INFO'
+    root.setLevel(getattr(logging, level))
 
     ch = None
     if outputLocation == "stdout":
@@ -29,7 +31,7 @@ def logInit(outputLocation="stdout", maxmb=5):
         ch = logging.handlers.RotatingFileHandler(os.path.abspath(outputLocation), maxBytes=(1048576*maxmb), backupCount=7)
     if not ch:
         return ch
-    ch.setLevel(logging.INFO)
+    ch.setLevel(getattr(logging, level))
     formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
     ch.setFormatter(formatter)
     root.addHandler(ch)

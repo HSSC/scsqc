@@ -13,7 +13,7 @@ class TestSqcBase(TestCase):
         logf = 'log_test.txt'
         if os.path.exists(logf):
             os.remove(logf)
-        log = logger.logInit(logf, 2);
+        log = logger.logInit('INFO', logf, 'test', 2);
 
         ## check logfile was created
         self.assertEqual(os.path.exists(logf), True);
@@ -69,7 +69,7 @@ class TestReponse(TestCase):
         from response import qcm_sub as qcmr
         from sqcbase import logger
         #log = logger.logInit('mylog.txt')
-        log = logger.logInit()
+        log = logger.logInit('INFO')
         verbosity = False
 
         CURDIR = os.path.dirname(os.path.abspath(__file__))
