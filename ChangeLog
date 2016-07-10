@@ -1,6 +1,8 @@
 CHANGES
 =======
 
+* minor mod to logger to accept verbose output
+* added logging and config
 * including ep changes for payload proc
 * added pl/sql scripts for automatic loading in prod
 * payload details included

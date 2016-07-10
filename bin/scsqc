@@ -1,11 +1,12 @@
-#!/bin/python
+#!/bin/bash
+
+"exec" "python" "-u" "-Wignore" "$0" "$@"
 
 from driver import sqcdriver
 import argparse
 
 if __name__ == "__main__":
 
-    #opt = OptionParser()
     opt = argparse.ArgumentParser()
     opt.add_argument ("-c", "--config", dest="conf", help="path to configuration file" )
     opt.add_argument("-l", "--log", dest="logLevel", choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'VERBOSE'], default='INFO', help="Set the logging level")
