@@ -34,9 +34,9 @@
   yum: name={{ item }} state=installed
   with_items:
     - git
+    - vim
     - python-pip
     - python-virtualenv
-    - python-dateutil
     - libffi
     - libffi-devel
     - libxml2-devel
@@ -55,6 +55,10 @@
   pip: requirements=/vagrant/requirements.txt executable=pip 
 #virtualenv="{{ virtualenv_path }}"
 
+
+# Create log directory
+- name: PyEnv | Create log directory
+  file: path=/var/log/scsqc owner=vagrant group=vagrant mode=0744 state=directory recurse=yes
 
 # Create each user with home directory on the correct patition, and add to group.
 - name: PyEnv | Create pyenv users

@@ -199,21 +199,21 @@ END GET_CONSTANT;
           hssc_etl.qcm_site qs
   
         -- visit htb_enc_id_root = qcm_site datasource_root
-        INNER JOIN cdw.visit@dtprd2 v
+        INNER JOIN cdw.visit v
         ON
           (
             v.htb_enc_id_root = qs.datasource_root
           )
   
         -- visit_detail(visit_id) = visit(visit_id)
-        INNER JOIN cdw.visit_detail@dtprd2 vd
+        INNER JOIN cdw.visit_detail vd
         ON
           (
             vd.visit_id = v.visit_id
           )
   
         -- procedure(visit_id) = visit(visit_id)
-        INNER JOIN cdw.procedure@dtprd2 px
+        INNER JOIN cdw.procedure px
         ON
           (
             px.visit_id = v.visit_id
@@ -235,7 +235,7 @@ END GET_CONSTANT;
   --          v.visit_id = vtl.htb_enc_act_id
   --        )
         -- patient(patient_id) = visit(patient_id)
-        INNER JOIN cdw.patient@dtprd2 p
+        INNER JOIN cdw.patient p
            ON
             (
               p.patient_id = v.patient_id
@@ -260,7 +260,7 @@ END GET_CONSTANT;
           AND px.proc_end_date > to_date('2016-04-01', 'YYYY-MM-DD')
            -- modified since last extract. TODO sysdate-7 with last batch time
           AND v.htb_enc_act_id in ( select enc_stg.enc_act_id
-                                    from cdw.enc_staging@dtprd2 enc_stg
+                                    from cdw.enc_staging enc_stg
                                     where enc_stg.processed_dt > m_trans_t0
                                   )
           AND qs.res_site = to_char(m_site_id)
