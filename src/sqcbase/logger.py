@@ -10,7 +10,7 @@ import logging, os, sys
 def logInit(level, outputLocation="stdout", modulename="root", maxmb=5):
     from logging import handlers
     root = logging.getLogger(modulename)
-    if level == 'VERBOSE' || level == None:
+    if level == 'VERBOSE' or level == None:
         level = 'INFO'
     root.setLevel(getattr(logging, level))
 
