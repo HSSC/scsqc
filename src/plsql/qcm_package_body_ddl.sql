@@ -1,14 +1,4 @@
-----------------------------------------------
--- Project: SCSQC
--- Author: Venkat Kaushik, Evan Phelps 
--- Purpose: Package body for QCM Ex/Tr
--- Created: Thu Jun 09 2016
-----------------------------------------------
---------------------------------------------------------
---  DDL for Package Body PKG_SCSQC_QCM
---------------------------------------------------------
-
-  CREATE OR REPLACE EDITIONABLE PACKAGE BODY "HSSC_ETL"."PKG_SCSQC_QCM" 
+CREATE OR REPLACE EDITIONABLE PACKAGE BODY "HSSC_ETL"."PKG_SCSQC_QCM"
 AS
 
   PKG infolog.package_name%TYPE := 'PKG_SCSQC_QCM';
@@ -73,12 +63,12 @@ END GET_CONSTANT;
 
     IF m_trans_t0 IS NULL THEN
       RAISE_APPLICATION_ERROR(ERRNUM_LAST_INCOMPLETE,
-      ERRMSG_LAST_INCOMPLETE || 'Site ' || m_site_id
+      ERRMSG_LAST_INCOMPLETE || '. Site ' || m_site_id
         || ' has no previously completed batches.');
     END IF;
     IF sysdate-m_trans_t0 > m_max_days THEN
       RAISE_APPLICATION_ERROR(ERRNUM_INCREMENTAL_TOO_BIG,
-      ERRMSG_INCREMENTAL_TOO_BIG || ' Transaction period is ' || ROUND(sysdate-
+      ERRMSG_INCREMENTAL_TOO_BIG || '. Transaction period is ' || ROUND(sysdate-
       m_trans_t0) || ' days; max is ' || m_max_days || ' days.');
     END IF;
 
@@ -141,7 +131,7 @@ END GET_CONSTANT;
           m_batch_id as "BATCH_ID",
   
           /*      Patients   */
-          p.birth_date as "Patients.DOB",
+          to_char(p.birth_date, 'MM/DD/YYYY') as "Patients.DOB",
           p.first_name as "Patients.First_Name",
           p.last_name as "Patients.Last_Name",
           SUBSTR(p.middle_name, 1, 1) as "Patients.Middle_Initial",
@@ -167,8 +157,8 @@ END GET_CONSTANT;
               px.proc_code ELSE NULL
           END AS "Studies.ICD9_Code",
   --        vd.admission_source as "Studies.Admission_Source", (TODO map)
-          vd.admission_date as "Studies.Admit_Date",
-          to_char(vd.discharge_date, 'YYYY-MM-DD') as "Studies.Discharge_Date",
+          to_char(vd.admission_date, 'MM/DD/YYYY') as "Studies.Admit_Date",
+          to_char(vd.discharge_date, 'MM/DD/YYYY') as "Studies.Discharge_Date",
           to_char(vd.discharge_date, 'HH24:MI') as "Studies.Discharge_Time",
           v.visit_id as "Studies.Encounter_Number"
   
@@ -258,7 +248,7 @@ END GET_CONSTANT;
               px.proc_end_date > (sysdate - m_max_days)
            -- one-time date cutoff for initial extract
           AND px.proc_end_date > to_date('2016-04-01', 'YYYY-MM-DD')
-           -- modified since last extract. TODO sysdate-7 with last batch time
+           -- modified since last extract.
           AND v.htb_enc_act_id in ( select enc_stg.enc_act_id
                                     from cdw.enc_staging enc_stg
                                     where enc_stg.processed_dt > m_trans_t0
@@ -280,5 +270,3 @@ END GET_CONSTANT;
   END ex_tr_qcm;
 
 END PKG_SCSQC_QCM ;
-
-/
