@@ -1,14 +1,4 @@
-----------------------------------------------
--- Project: SCSQC
--- Author: Venkat Kaushik, Evan Phelps 
--- Purpose: Package body for QCM Ex/Tr
--- Created: Thu Jun 09 2016
-----------------------------------------------
---------------------------------------------------------
---  DDL for Package Body PKG_SCSQC_QCM
---------------------------------------------------------
-
-  CREATE OR REPLACE EDITIONABLE PACKAGE BODY "HSSC_ETL"."PKG_SCSQC_QCM" 
+CREATE OR REPLACE EDITIONABLE PACKAGE BODY "HSSC_ETL"."PKG_SCSQC_QCM"
 AS
 
   PKG infolog.package_name%TYPE := 'PKG_SCSQC_QCM';
@@ -73,12 +63,12 @@ END GET_CONSTANT;
 
     IF m_trans_t0 IS NULL THEN
       RAISE_APPLICATION_ERROR(ERRNUM_LAST_INCOMPLETE,
-      ERRMSG_LAST_INCOMPLETE || 'Site ' || m_site_id
+      ERRMSG_LAST_INCOMPLETE || '. Site ' || m_site_id
         || ' has no previously completed batches.');
     END IF;
     IF sysdate-m_trans_t0 > m_max_days THEN
       RAISE_APPLICATION_ERROR(ERRNUM_INCREMENTAL_TOO_BIG,
-      ERRMSG_INCREMENTAL_TOO_BIG || ' Transaction period is ' || ROUND(sysdate-
+      ERRMSG_INCREMENTAL_TOO_BIG || '. Transaction period is ' || ROUND(sysdate-
       m_trans_t0) || ' days; max is ' || m_max_days || ' days.');
     END IF;
 
@@ -141,34 +131,57 @@ END GET_CONSTANT;
           m_batch_id as "BATCH_ID",
   
           /*      Patients   */
-          p.birth_date as "Patients.DOB",
+          to_char(p.birth_date, 'MM/DD/YYYY') as "Patients.DOB",
           p.first_name as "Patients.First_Name",
           p.last_name as "Patients.Last_Name",
           SUBSTR(p.middle_name, 1, 1) as "Patients.Middle_Initial",
-          p.sex as "Patients.Sex",
-          p.race as "Patients.Race",
+          DECODE(p.sex, 'M', 1, 'F', 2, NULL) as "Patients.Sex",
+          DECODE(p.race, 'African American', 20,
+                         'Asian', 50,
+                         'Native Hawaiian or Other Pacific Islander', 40,
+                         'White', 10,
+                         'More than one race', 70,
+                         'Hispanic or Latino', 70,
+                         'Other Race', 70, 
+                         'Unknown', 70,
+                         'Refused Declaration', 0,
+                         'American Indian or Alaska Native', 30,
+                         NULL
+                ) as "Patients.Race",
           p.addr_1 as "Patients.Address",
           p.addr_2 as "Patients.Address2",
           p.city as "Patients.City",
-          p.state as "Patients.State",
+          DECODE(p.state, 'SOUTH CAROLINA', 'SC',
+                          'NORTH CAROLINA', 'NC',
+                          'GEORGIA', 'GA',
+                          'FLORIDA', 'FL',
+                          'VIRGINIA', 'VA',
+                          'NEW YORK', 'NY',
+                          p.state
+                ) as "Patients.State",
           p.zip as "Patients.Zip",
-          p.country as "Patients.Country",
-          p.county as "Patients.County",
+          DECODE(p.country, 'UNITED STATES', 'USA',
+                            'US', 'USA',
+                            'UNITED STATES OF AMERICA', 'USA',
+                            'USA', 'USA',
+                            NULL
+                ) as "Patients.Country",
+          cmap.county as "Patients.County",
           p.home_phone as "Patients.Phone",
           p.email_address as "Patients.Email",
-          p.ethnicity as "Patients.Ethnicity_Hispanic",
+          DECODE(COALESCE(p.ethnicity, p.race), 'Hispanic or Latino', 1,
+                                                'Not Hispanic or Latino', 0,
+                                                2
+                )  as "Patients.Ethnicity_Hispanic",
   
           /* Studies */
-          px.proc_end_date as "Studies.OP_Date",
+          to_char(px.proc_end_date, 'MM/DD/YYYY') as "Studies.OP_Date",
           CASE WHEN px.proc_code_type = 'CPT4' THEN
             px.proc_code ELSE NULL
           END AS "Studies.CPT_Code",
-          CASE WHEN px.proc_code_type IN ('ICD-9-CM', 'ICD-10-PCS') THEN
-              px.proc_code ELSE NULL
-          END AS "Studies.ICD9_Code",
   --        vd.admission_source as "Studies.Admission_Source", (TODO map)
-          vd.admission_date as "Studies.Admit_Date",
-          to_char(vd.discharge_date, 'YYYY-MM-DD') as "Studies.Discharge_Date",
+          to_char(vd.admission_date, 'MM/DD/YYYY') as "Studies.Admit_Date",
+          to_char(vd.discharge_date, 'MM/DD/YYYY') as "Studies.Discharge_Date",
           to_char(vd.discharge_date, 'HH24:MI') as "Studies.Discharge_Time",
           v.visit_id as "Studies.Encounter_Number"
   
@@ -200,24 +213,15 @@ END GET_CONSTANT;
   
         -- visit htb_enc_id_root = qcm_site datasource_root
         INNER JOIN cdw.visit v
-        ON
-          (
-            v.htb_enc_id_root = qs.datasource_root
-          )
+           ON ( v.htb_enc_id_root = qs.datasource_root )
   
         -- visit_detail(visit_id) = visit(visit_id)
         INNER JOIN cdw.visit_detail vd
-        ON
-          (
-            vd.visit_id = v.visit_id
-          )
+           ON ( vd.visit_id = v.visit_id )
   
         -- procedure(visit_id) = visit(visit_id)
         INNER JOIN cdw.procedure px
-        ON
-          (
-            px.visit_id = v.visit_id
-          )
+           ON ( px.visit_id = v.visit_id )
   
         -- SQC targeted procedures only
         INNER JOIN qcm_proc_codes pxg
@@ -236,10 +240,9 @@ END GET_CONSTANT;
   --        )
         -- patient(patient_id) = visit(patient_id)
         INNER JOIN cdw.patient p
-           ON
-            (
-              p.patient_id = v.patient_id
-            )
+           ON ( p.patient_id = v.patient_id )
+        LEFT OUTER JOIN qcm_map_county cmap
+           ON ( p.county = cmap.fips )
         -- get tx_start of previous successful batch
         --    for now, let's do this in client app, which will pass via m_trans_t0
   --      INNER JOIN qcm_meta qmeta
@@ -258,7 +261,7 @@ END GET_CONSTANT;
               px.proc_end_date > (sysdate - m_max_days)
            -- one-time date cutoff for initial extract
           AND px.proc_end_date > to_date('2016-04-01', 'YYYY-MM-DD')
-           -- modified since last extract. TODO sysdate-7 with last batch time
+           -- modified since last extract.
           AND v.htb_enc_act_id in ( select enc_stg.enc_act_id
                                     from cdw.enc_staging enc_stg
                                     where enc_stg.processed_dt > m_trans_t0
@@ -280,5 +283,3 @@ END GET_CONSTANT;
   END ex_tr_qcm;
 
 END PKG_SCSQC_QCM ;
-
-/
