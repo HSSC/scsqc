@@ -1,9 +1,9 @@
-> ----------------------------------------------
-> -- Project: SCSQC
-> -- Author: Venkat Kaushik, Evan Phelps
-> -- Purpose: Package skeleton for QCM Ex/Tr
-> -- Created: Thu Jun 09 2016
-> ----------------------------------------------
+----------------------------------------------
+-- Project: SCSQC
+-- Author: Venkat Kaushik, Evan Phelps
+-- Purpose: Package skeleton for QCM Ex/Tr
+-- Created: Thu Jun 09 2016
+----------------------------------------------
 
 --------------------------------------------------------
 --  DDL for Package PKG_SCSQC_QCM

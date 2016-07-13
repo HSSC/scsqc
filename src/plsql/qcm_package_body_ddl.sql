@@ -1,3 +1,14 @@
+----------------------------------------------
+-- Project: SCSQC
+-- Author: Venkat Kaushik, Evan Phelps
+-- Purpose: Package body for QCM Ex/Tr
+-- Created: Thu Jun 09 2016
+----------------------------------------------
+
+--------------------------------------------------------
+--  DDL for Package PKG_SCSQC_QCM_BODY
+--------------------------------------------------------
+
 CREATE OR REPLACE EDITIONABLE PACKAGE BODY "HSSC_ETL"."PKG_SCSQC_QCM"
 AS
 
@@ -119,7 +130,7 @@ END GET_CONSTANT;
           -- encounter (CDW.VISIT)
           v.HTB_ENC_ID_ROOT as "DATASOURCE_ROOT",
           v.HTB_ENC_ACT_ID as "HTB_ENC_ACT_ID",
-          v.visit_id as "VISIT_ID",
+          -- v.visit_id as "VISIT_ID", ## removed and kept only htb_enc_act_id
   
           qcmc.res_case_id AS "QCM_Casenum",
           
@@ -183,7 +194,7 @@ END GET_CONSTANT;
           to_char(vd.admission_date, 'MM/DD/YYYY') as "Studies.Admit_Date",
           to_char(vd.discharge_date, 'MM/DD/YYYY') as "Studies.Discharge_Date",
           to_char(vd.discharge_date, 'HH24:MI') as "Studies.Discharge_Time",
-          v.visit_id as "Studies.Encounter_Number"
+          v.htb_enc_id_ext as "Studies.Encounter_Number"
   
           /* Discharge */
           --vd.discharge_disposition as "Discharge_Destination", (TODO map)
