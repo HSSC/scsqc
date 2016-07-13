@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+* added folder files-hide to gitignore
+* auto-update to AUTHORS
+* ChangeLog catchup
+* ChangeLog catchup
+* excel dialect with minimal quoting
 * formatted dates in payload cursor; added formatting in some error messages; removed irrelevant TODO item
 * mod to run bin/scsqc in virtualenv
 * minor mod to logger to accept verbose output
