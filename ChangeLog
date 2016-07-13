@@ -1,6 +1,8 @@
 CHANGES
 =======
 
+* formatted dates in payload cursor; added formatting in some error messages; removed irrelevant TODO item
+* mod to run bin/scsqc in virtualenv
 * minor mod to logger to accept verbose output
 * added logging and config
 * including ep changes for payload proc
