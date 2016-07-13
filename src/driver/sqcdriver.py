@@ -88,7 +88,7 @@ class sqc_driver:
 
     def transform(self, item):
         if isinstance(item, datetime.datetime):
-            item = item.strftime('%Y-%m-%d')
+            item = item.strftime('%m/%d/%Y')
         elif isinstance(item, str):
             item = ( "\'%s\'" % item )
         return item
@@ -167,8 +167,9 @@ class sqc_driver:
         self.ppath = self.pl_opts['csv_local_path']
         try:
             fpath = os.path.join(self.ppath, self.pfile)
-            f = open(fpath, "w")
-            writer = csv.DictWriter(f, lineterminator="\n", quoting=csv.QUOTE_NONNUMERIC, fieldnames=self.qcm_dict)
+            f = open(fpath, "wb")
+            #writer = csv.DictWriter(f, lineterminator="\r\n", dialect='excel', quoting=csv.QUOTE_NONE, fieldnames=self.qcm_dict)
+            writer = csv.DictWriter(f, dialect='excel', escapechar='\\', fieldnames=self.qcm_dict)
             writer.writeheader()
         except IOError, err:
             self.log.error('ERROR: reading template file %s\n%s\n' % ( fpath , str(err)), exc_info=1)
@@ -194,7 +195,7 @@ class sqc_driver:
                 in_qcm_case += " INTO HSSC_ETL.QCM_CASE ( "
                 for i in xrange(len(head)):
                   if (head[i][0] in self.qcm_dict):
-                    qcm_payload[head[i][0]] = self.transform(row[i])
+                    qcm_payload[head[i][0]] =  row[i] ## self.transform(row[i])
                   else:
                     if head[i][0] in skip_columns:
                       continue
@@ -209,6 +210,9 @@ class sqc_driver:
                     self.db.get_mcur().execute(in_qcm_case)
                     self.db.get_conn().commit()
                     in_qcm_case = (' INSERT ALL \n')
+
+            if self.options.logLevel == 'VERBOSE':
+                self.log.log(logging.INFO, in_qcm_case)
 
             in_qcm_case += "SELECT * FROM dual"
         if meta_numrows > 0:
