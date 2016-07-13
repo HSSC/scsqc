@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* mod to run bin/scsqc in virtualenv
 * minor mod to logger to accept verbose output
 * added logging and config
 * including ep changes for payload proc
