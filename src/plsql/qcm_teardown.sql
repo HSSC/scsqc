@@ -15,6 +15,7 @@ drop table "HSSC_ETL"."QCM_META" cascade constraints PURGE;
 drop table "HSSC_ETL"."QCM_CNTRL" cascade constraints PURGE;
 drop table "HSSC_ETL"."QCM_CASE" cascade constraints PURGE;
 drop table "HSSC_ETL"."QCM_PROC_CODES" cascade constraints PURGE;
+drop table "HSSC_ETL"."QCM_MAP_COUNTY" cascade constraints PURGE;
 
 -- drop sequences;
 drop sequence "HSSC_ETL"."QCM_BATCH_ID_SEQ";

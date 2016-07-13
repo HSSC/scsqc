@@ -13,6 +13,8 @@ build_files=(
 "qcm_build03.sql"
 "qcm_case_ddl.sql"
 "qcm_cntrl_ddl.sql"
+"qcm_map_county_data.sql"
+"qcm_map_county_ddl.sql"
 "qcm_meta_ddl.sql"
 "qcm_package_body_ddl.sql"
 "qcm_package_ddl.sql"
