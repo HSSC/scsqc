@@ -160,7 +160,12 @@ END GET_CONSTANT;
                           p.state
                 ) as "Patients.State",
           p.zip as "Patients.Zip",
-          p.country as "Patients.Country",
+          DECODE(p.country, 'UNITED STATES', 'USA',
+                            'US', 'USA',
+                            'UNITED STATES OF AMERICA', 'USA',
+                            'USA', 'USA',
+                            NULL
+                ) as "Patients.Country",
           cmap.county as "Patients.County",
           p.home_phone as "Patients.Phone",
           p.email_address as "Patients.Email",
