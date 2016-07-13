@@ -136,17 +136,31 @@ END GET_CONSTANT;
           p.last_name as "Patients.Last_Name",
           SUBSTR(p.middle_name, 1, 1) as "Patients.Middle_Initial",
           DECODE(p.sex, 'M', 1, 'F', 2, NULL) as "Patients.Sex",
-          p.race as "Patients.Race",
+          DECODE(p.race, 'African American', 20,
+                         'Asian', 50,
+                         'Native Hawaiian or Other Pacific Islander', 40,
+                         'White', 10,
+                         'More than one race', 70,
+                         'Hispanic or Latino', 70,
+                         'Other Race', 70, 
+                         'Unknown', 70,
+                         'Refused Declaration', 0,
+                         'American Indian or Alaska Native', 30,
+                         NULL
+                ) as "Patients.Race",
           p.addr_1 as "Patients.Address",
           p.addr_2 as "Patients.Address2",
           p.city as "Patients.City",
           p.state as "Patients.State",
           p.zip as "Patients.Zip",
           p.country as "Patients.Country",
-          p.county as "Patients.County",
+          cmap.county as "Patients.County",
           p.home_phone as "Patients.Phone",
           p.email_address as "Patients.Email",
-          p.ethnicity as "Patients.Ethnicity_Hispanic",
+          DECODE(COALESCE(p.ethnicity, p.race), 'Hispanic or Latino', 1,
+                                                'Not Hispanic or Latino', 0,
+                                                2
+                )  as "Patients.Ethnicity_Hispanic",
   
           /* Studies */
           to_char(px.proc_end_date, 'MM/DD/YYYY') as "Studies.OP_Date",
@@ -187,24 +201,15 @@ END GET_CONSTANT;
   
         -- visit htb_enc_id_root = qcm_site datasource_root
         INNER JOIN cdw.visit v
-        ON
-          (
-            v.htb_enc_id_root = qs.datasource_root
-          )
+           ON ( v.htb_enc_id_root = qs.datasource_root )
   
         -- visit_detail(visit_id) = visit(visit_id)
         INNER JOIN cdw.visit_detail vd
-        ON
-          (
-            vd.visit_id = v.visit_id
-          )
+           ON ( vd.visit_id = v.visit_id )
   
         -- procedure(visit_id) = visit(visit_id)
         INNER JOIN cdw.procedure px
-        ON
-          (
-            px.visit_id = v.visit_id
-          )
+           ON ( px.visit_id = v.visit_id )
   
         -- SQC targeted procedures only
         INNER JOIN qcm_proc_codes pxg
@@ -223,10 +228,9 @@ END GET_CONSTANT;
   --        )
         -- patient(patient_id) = visit(patient_id)
         INNER JOIN cdw.patient p
-           ON
-            (
-              p.patient_id = v.patient_id
-            )
+           ON ( p.patient_id = v.patient_id )
+        LEFT OUTER JOIN qcm_map_county cmap
+           ON ( p.county = cmap.fips )
         -- get tx_start of previous successful batch
         --    for now, let's do this in client app, which will pass via m_trans_t0
   --      INNER JOIN qcm_meta qmeta
