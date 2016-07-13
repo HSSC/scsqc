@@ -135,7 +135,7 @@ END GET_CONSTANT;
           p.first_name as "Patients.First_Name",
           p.last_name as "Patients.Last_Name",
           SUBSTR(p.middle_name, 1, 1) as "Patients.Middle_Initial",
-          p.sex as "Patients.Sex",
+          DECODE(p.sex, 'M', 1, 'F', 2, NULL) as "Patients.Sex",
           p.race as "Patients.Race",
           p.addr_1 as "Patients.Address",
           p.addr_2 as "Patients.Address2",
@@ -153,9 +153,6 @@ END GET_CONSTANT;
           CASE WHEN px.proc_code_type = 'CPT4' THEN
             px.proc_code ELSE NULL
           END AS "Studies.CPT_Code",
-          CASE WHEN px.proc_code_type IN ('ICD-9-CM', 'ICD-10-PCS') THEN
-              px.proc_code ELSE NULL
-          END AS "Studies.ICD9_Code",
   --        vd.admission_source as "Studies.Admission_Source", (TODO map)
           to_char(vd.admission_date, 'MM/DD/YYYY') as "Studies.Admit_Date",
           to_char(vd.discharge_date, 'MM/DD/YYYY') as "Studies.Discharge_Date",
