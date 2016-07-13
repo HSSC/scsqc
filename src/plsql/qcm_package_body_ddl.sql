@@ -149,7 +149,7 @@ END GET_CONSTANT;
           p.ethnicity as "Patients.Ethnicity_Hispanic",
   
           /* Studies */
-          px.proc_end_date as "Studies.OP_Date",
+          to_char(px.proc_end_date, 'MM/DD/YYYY') as "Studies.OP_Date",
           CASE WHEN px.proc_code_type = 'CPT4' THEN
             px.proc_code ELSE NULL
           END AS "Studies.CPT_Code",
