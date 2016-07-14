@@ -241,7 +241,7 @@ END GET_CONSTANT;
                
         -- get existing sqc case number, if exists
         LEFT OUTER JOIN qcm_case qcmc
-           ON ( v.visit_id = qcmc.visit_id )
+           ON ( v.visit_id = qcmc.htb_enc_act_id )
            
         -- visit(visit_id) = vital(htb_enc_act_id)
   --      LEFT OUTER JOIN cdw.vital vtl
