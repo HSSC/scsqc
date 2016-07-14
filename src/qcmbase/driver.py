@@ -8,9 +8,9 @@ import datetime
 import logging
 
 ## local imports
-from sqcbase import config
-from sqcbase import logger
-from transfer import sftp_transfer
+import config
+import logger
+import sftp_transfer
 
 
 
@@ -60,7 +60,7 @@ class qcm_db:
           self.db.close()
 
 
-class sqc_driver:
+class qcm_driver:
 
     def __init__(self, options):
         self.options = options
@@ -134,6 +134,7 @@ class sqc_driver:
             pass
 
         ## call stored procedure with parameters
+        self.log.info('Extraction Parameters: TX_START = %s\tSITE_ID = %s' % (proc_tx_start, proc_site_id))
         self.log.debug( 'Calling procedure with p_trans_t0 = %s for p_site_id = %s' % (proc_tx_start, proc_site_id))
         proc_output = self.db.get_mcur().callproc( "HSSC_ETL.PKG_SCSQC_QCM.ex_tr_qcm", [proc_tx_start, proc_site_id, proc_batch_id, self.ocur, proc_start_days] )
         self.batch_id = proc_output[2]

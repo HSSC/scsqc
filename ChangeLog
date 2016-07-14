@@ -1,6 +1,8 @@
 CHANGES
 =======
 
+* fixed authors
+* site roots fixed based on prod datasource
 * push ChangeLog
 * decode variants of country=US to 3-character code USA; otherwise, NULL (relies on high frequency of country=US, which is reasonable in our dataset)
 * substitute some common state long names for abbreviations.  This should not occur for newer patients
