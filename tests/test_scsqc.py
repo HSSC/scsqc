@@ -1,13 +1,19 @@
 from unittest import TestCase
 
 import os, sys
-from sqcbase import logger
+from qcmbase import logger
+from qcmbase import config
+from qcmbase import sftp_transfer
+from qcmbase import qcm_sub as qcmr
 
-class TestSqcBase(TestCase):
+class TestQCMDriver(TestCase):
+
+    def test_qcmdriver_cmdline(self):
+        from qcmbase.command_line import main
+        main()
 
     ## unit test for logger
-    def test_sqcbase_logger(self):
-        from sqcbase import logger
+    def test_qcmdriver_logger(self):
 
         ## init a logfile using module
         logf = 'log_test.txt'
@@ -25,8 +31,7 @@ class TestSqcBase(TestCase):
         os.remove(logf)
 
     ## unit test for config
-    def test_sqcbase_config(self):
-        from sqcbase import config
+    def test_qcmdriver_config(self):
 
         inpf = 'config_test.csv'
         comp = [ {'var1a': 'value1A', 'var2a': 'value2A'}, {'var2b': 'value2B'} ]
@@ -53,27 +58,15 @@ class TestSqcBase(TestCase):
         self.assertEqual(data, comp)
         os.remove(inpf)
 
-    def test_sqcbase_cmdline(self):
-        from sqcbase.command_line import main
-        main()
-
-class TestReponse(TestCase):
-    import response
-
-    def test_response_cmdline(self):
-        from response.command_line import main
-        main()
-
+class TestQCMResponse(TestCase):
 
     def test_response_extract(self):
-        from response import qcm_sub as qcmr
-        from sqcbase import logger
         #log = logger.logInit('mylog.txt')
         log = logger.logInit('INFO')
         verbosity = False
 
         CURDIR = os.path.dirname(os.path.abspath(__file__))
-        infile = os.path.join(CURDIR, '../src/response/data/Response_Sample.csv_2016-05-19_15-00-15.xml')
+        infile = os.path.join(CURDIR, '../src/qcmbase/data/qcmitt/Response_Sample.csv_2016-05-19_15-00-15.xml')
 
         #log.info(infile)
         try:
@@ -105,7 +98,6 @@ class TestReponse(TestCase):
 
     def test_transfer_sftp_aput(self):
 
-        from transfer import sftp_transfer
         host='hssc-cdwr3-hsie-d.clemson.edu'
         port=22
         usern='transfer'
@@ -124,7 +116,6 @@ class TestReponse(TestCase):
 
     def test_transfer_sftp_bget(self):
 
-        from transfer import sftp_transfer
         host='hssc-cdwr3-hsie-d.clemson.edu'
         port=22
         usern='transfer'

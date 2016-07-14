@@ -2,7 +2,7 @@
 
 "exec" "python" "-u" "-Wignore" "$0" "$@"
 
-from driver import sqcdriver
+from qcmbase import driver
 import argparse
 
 if __name__ == "__main__":
@@ -12,6 +12,6 @@ if __name__ == "__main__":
     opt.add_argument("-l", "--log", dest="logLevel", choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'VERBOSE'], default='INFO', help="Set the logging level")
     args = opt.parse_args()
 
-    driver = sqcdriver.sqc_driver(args)
-    driver.run()
+    dr = driver.qcm_driver(args)
+    dr.run()
 

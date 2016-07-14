@@ -1,8 +1,12 @@
 import os
+import glob
 from setuptools import setup, find_packages
 
-def read(descfile):
+def readDesc(descfile):
     return open( os.path.join ( os.path.dirname(__file__), descfile)).read()
+
+def getDataFiles(source_files):
+    return glob.glob( os.path.join ( os.path.dirname(__file__), source_files))
 
 setup(
     name='scsqc',
@@ -21,7 +25,7 @@ setup(
 
     description= ('SC Surgical Quality Collaborative - DataMove/DataMart') ,
 
-    long_description = read('README.md'),
+    long_description = readDesc('README.md'),
 
     platforms="platform-independent",
 
@@ -32,7 +36,7 @@ setup(
     package_dir = {'':'src'},
 
     package_data = {
-        'response': ['data/*'],
+        'qcmbase': ['data/qcmitt/*'],
     },
 
     classifiers=[
@@ -63,8 +67,11 @@ setup(
         'bin/scsqc'
     ],
 
+    data_files= [ ('/usr/local/etc/qcmetrix', getDataFiles('src/qcmbase/data/qcmetrix/*'))],
+
     pbr=True,
     zip_safe=False,
     include_package_data=True,
 
 )
+
