@@ -85,6 +85,18 @@ class qcm_driver:
         self.tr_opts = config.getConfigSectionMap( self.config_vars, "sftp" )
         self.log = logger.logInit(self.options.logLevel, self.pl_opts['log_path'], type(self).__name__)
         self.db = qcm_db(self.db_opts, self.log)
+        if self.options.show:
+            self.printconfig()
+
+    def printconfig(self):
+        sec_done = []
+        for item in self.config_vars.sections():
+            qq = config.getConfigSectionMap(self.config_vars, item)
+            sys.stderr.write('\n----------------------[ %s ]----------------------\n' % item)
+            for j in qq:
+                if j not in sec_done:
+                    sys.stderr.write( '%-25s: %s\n' % (j, qq[j]))
+                    sec_done.append(j)
 
     def transform(self, item):
         if isinstance(item, datetime.datetime):

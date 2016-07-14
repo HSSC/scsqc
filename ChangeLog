@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* prod readiness fixes/mods
 * fixed authors
 * site roots fixed based on prod datasource
 * push ChangeLog

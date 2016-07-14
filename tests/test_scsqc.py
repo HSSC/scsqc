@@ -60,6 +60,14 @@ class TestQCMDriver(TestCase):
 
 class TestQCMResponse(TestCase):
 
+    def __init__(self, *args, **kwargs):
+        super(TestQCMResponse, self).__init__(*args, **kwargs)
+        self.host='hssc-sftp-p.clemson.edu'
+        self.port=16300
+        self.usern='scsqc'
+        self.keyfile= os.path.join('/home/scsqc/.ssh', 'scsqc-sftp.key')
+        self.filename = 'BigFILE'
+
     def test_response_extract(self):
         #log = logger.logInit('mylog.txt')
         log = logger.logInit('INFO')
@@ -98,37 +106,27 @@ class TestQCMResponse(TestCase):
 
     def test_transfer_sftp_aput(self):
 
-        host='hssc-cdwr3-hsie-d.clemson.edu'
-        port=22
-        usern='transfer'
-        keyfile= os.path.join(os.getcwd(), 'roles/pyenv/files/hsie-d.key')
-        filename = 'BigFILE'
-        filepath = os.path.join(os.getcwd(), filename)
+        filepath = os.path.join(os.getcwd(), self.filename)
         os.system('dd if=/dev/zero of=%s bs=40960 count=1 iflag=fullblock status=none' % filepath)
-        handle, transport = sftp_transfer.sftp_connect(host, port, usern, keyfile)
+        handle, transport = sftp_transfer.sftp_connect(self.host, self.port, self.usern, self.keyfile)
         if not hasattr(self, 'assertIsNotNone'):
             self.assertNotEqual(handle, None)
         else:
             self.assertIsNotNone(handle)
-        sftp_transfer.sftp_put(handle, filename, ('/home/%s/testing/large/file/%s' % (usern, filename) ))
+        sftp_transfer.sftp_put(handle, self.filename, ('/home/%s/%s' % (self.usern, self.filename) ))
         os.remove(filepath)
         transport.close()
 
     def test_transfer_sftp_bget(self):
 
-        host='hssc-cdwr3-hsie-d.clemson.edu'
-        port=22
-        usern='transfer'
-        keyfile= os.path.join(os.getcwd(), 'roles/pyenv/files/hsie-d.key')
-        filename = 'BigFILE'
-        filepath = '/home/%s/testing/large/file/%s' % (usern, filename)
-        handle, transport = sftp_transfer.sftp_connect(host, port, usern, keyfile)
+        filepath = '/home/%s/%s' % (self.usern, self.filename)
+        handle, transport = sftp_transfer.sftp_connect(self.host, self.port, self.usern, self.keyfile)
         if not hasattr(self, 'assertIsNotNone'):
             self.assertNotEqual(handle, None)
         else:
             self.assertIsNotNone(handle)
-        sftp_transfer.sftp_get(handle, filepath , filename.lower())
-        os.remove(filename.lower())
+        sftp_transfer.sftp_get(handle, filepath , self.filename.lower())
+        os.remove(self.filename.lower())
         transport.close()
 
 
