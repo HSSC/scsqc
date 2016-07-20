@@ -1,0 +1,70 @@
+#!/bin/bash
+
+#----------------------------------------------
+#- Project: SCSQC
+#- Author: Venkat Kaushik 
+#- Purpose: setup/cleanup script for SQC
+#- Created: Thu Jun 09 2016
+#----------------------------------------------
+
+build_files=(
+"qcm_build01.sql"
+"qcm_build02.sql"
+"qcm_build03.sql"
+"qcm_case_ddl.sql"
+"qcm_cntrl_ddl.sql"
+"qcm_map_county_data.sql"
+"qcm_map_county_ddl.sql"
+"qcm_meta_ddl.sql"
+"qcm_package_body_ddl.sql"
+"qcm_package_ddl.sql"
+"qcm_seq_trig.sql"
+"qcm_site_data.sql"
+"qcm_site_ddl.sql"
+"qcm_teardown.sql"
+"qcm_user_roles.sql"
+)
+
+function init() {
+  for f in "${build_files[@]}"; do
+    echo -ne "checking for $f .."
+    test -f $f &> /dev/null; ret=$?
+    [ $ret -eq 0 ] && echo ok || (echo not found && exit $ret)
+  done
+}
+
+function usage() {
+    echo "Usage:"
+    echo "$0 [setup|teardown]"
+    echo
+    echo "setup    : builds QCM DB structure - Tables, Package, Triggers, Sequences, Users and Roles"
+    echo "teardown : removes all traces of QCM DB structure and cleans up"
+    echo 
+    echo "NOTE: Requires sysdba access"
+    echo "WARNING: If you don't know what you are doing, please consult QCM documentation"
+}
+
+
+function setup() {
+  log="build_setup"${output}
+  init &> build_output_00.log
+  echo exit | sqlplus -S '/ as sysdba' @qcm_build01.sql &> /dev/null
+  echo exit | sqlplus -S '/ as sysdba' @qcm_build02.sql &> /dev/null
+  echo exit | sqlplus -S '/ as sysdba' @qcm_build03.sql &> /dev/null
+  cat `ls build_output_*.log | sort` > $log
+  rm -f build_output_??.log
+}
+
+function teardown() {
+  log="build_teardown"
+  echo exit | sqlplus -S '/ as sysdba' @qcm_teardown.sql &> /dev/null
+  test -f $log.log && mv $log.log ${log}${output}
+}
+
+now=$(date +%Y%m%d%H%M%S)
+output="_output.$now.log"
+
+[ $# -lt 1 ] && echo -ne "too few arguments\n" && usage && exit 0
+[ $1 == "setup" ] && setup
+[ $1 == "teardown" ] && teardown
+

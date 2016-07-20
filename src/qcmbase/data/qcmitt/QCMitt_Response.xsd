@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="QCMitt">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="QCMittResponse">
+					<xs:annotation>
+						<xs:documentation>
+							Site=Hospital Site Number
+						</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element maxOccurs="unbounded" name="Response">
+								<xs:annotation>
+									<xs:documentation>
+										Status=Success, Created, Failure
+										Type=Information, Validation, Load to Server, Schema Validation
+										LCN=Local case number
+										MRN=Patient medical record number
+										QCM_Casenumber=QCMetrix case number
+									</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:simpleContent>
+										<xs:extension base="xs:string">
+											<xs:attribute name="Status" type="xs:string" use="required" />											
+											<xs:attribute name="Type" type="xs:string" use="required" />
+											<xs:attribute name="LCN" type="xs:string" use="required" />
+											<xs:attribute name="MRN" type="xs:string" use="required" />
+											<xs:attribute name="QCM_Casenumber" type="xs:string" use="required" />
+										</xs:extension>
+									</xs:simpleContent>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="Site" type="xs:string" use="required" />
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

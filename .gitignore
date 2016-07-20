@@ -3,8 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+files-hide/
+
 # C extensions
 *.so
+
+## oracle client rpms and wallet files to exclude
+roles/pyenv/files/*.rpm
+roles/pyenv/files/scsqc.wxt/[c,e]wallet.*
 
 # Distribution / packaging
 .Python
@@ -57,6 +63,9 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# vagrant
+.vagrant/
 
 #Ipython Notebook
 .ipynb_checkpoints

@@ -1,0 +1,30 @@
+CHANGES
+=======
+
+* prod readiness fixes/mods
+* fixed authors
+* site roots fixed based on prod datasource
+* push ChangeLog
+* decode variants of country=US to 3-character code USA; otherwise, NULL (relies on high frequency of country=US, which is reasonable in our dataset)
+* substitute some common state long names for abbreviations.  This should not occur for newer patients
+* resolve to county names, race/ethnicity codes.  minor reformatting of sql
+* translate gender/sex to qcm codes
+* format OP_Date
+* added folder files-hide to gitignore
+* auto-update to AUTHORS
+* ChangeLog catchup
+* ChangeLog catchup
+* excel dialect with minimal quoting
+* formatted dates in payload cursor; added formatting in some error messages; removed irrelevant TODO item
+* mod to run bin/scsqc in virtualenv
+* minor mod to logger to accept verbose output
+* added logging and config
+* including ep changes for payload proc
+* added pl/sql scripts for automatic loading in prod
+* payload details included
+* added el67 support, tested sqcdriver and added basic config for driver
+* package, stored procs and schema tables for sqc project
+* added SFTP module for file transfer - el7/el65 tested
+* mods to qcm_api to work with el65/py26, el7/py27
+* added response and sqcbase modules, tested on el7
+* Initial commit
