@@ -1,0 +1,245 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Architecture &mdash; scsqc 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="scsqc 1.0 documentation" href="index.html"/>
+        <link rel="next" title="Installation" href="install.html"/>
+        <link rel="prev" title="South Carolina Surgical Quality Collaborative" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> scsqc
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#secure-database-access">Secure Database Access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#process-flow">Process Flow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="refguide.html">Reference Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devtest.html">Production Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">scsqc</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Architecture</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/archd.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="architecture">
+<h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h1>
+<p>The basic architectural components are a database server, an application server and
+a secure FTP server which reside in a VPN at the <a class="reference external" href="http://www.clemson.edu/ccit/about/">CCIT</a> data center.</p>
+<img alt="_images/design.png" src="_images/design.png" />
+<p>The SQC application runs periodically on the application server and connects securely
+to the database, requests the data. The extraction of data is performed by a stored
+procedure in a database package. Data extracted is serialized as <em>csv</em> format
+and staged to a local file on the application server. This file is securely
+transmitted to the FTP server in a pre-defined location for consumption by QCMetrix
+interface.</p>
+<div class="section" id="secure-database-access">
+<h2>Secure Database Access<a class="headerlink" href="#secure-database-access" title="Permalink to this headline">¶</a></h2>
+<p>A secure connection is established to the database server
+using an <a class="reference external" href="https://docs.oracle.com/database/121/DBFSG/users_roles.htm#DBFSG20000">application principal</a>
+with access only to few database tables in a single schema. The
+authentication mechanism is defined for the application user includes the following <strong>two steps</strong></p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><strong>Client-side wallet</strong>: a <a class="reference external" href="http://docs.oracle.com/cd/B19306_01/network.102/b14266/cnctslsh.htm#g1033548">secure software container</a> used in establishing a connection</li>
+<li><strong>Password authenticaiton</strong>: <a class="reference external" href="https://docs.oracle.com/database/121/DBFSG/users_roles.htm#DBFSG20000">for application user</a> to access the schema</li>
+</ol>
+</div></blockquote>
+<p>The application access to is further restricted by defining application
+roles for its use and granting specific privileges for SELECT, INSERT, UPDATE and EXECUTE.
+This mechanism is to ensure secure and restricted access to data by the application.</p>
+</div>
+<div class="section" id="process-flow">
+<h2>Process Flow<a class="headerlink" href="#process-flow" title="Permalink to this headline">¶</a></h2>
+<p>The process flow diagram for Phase 1 of the project is shown below. A single block of extract, transform, serialize and
+transfer processes occur per site based on criteria defined for extraction. Once the payload (data) is transferred to the
+SFTP server, a handshake occurs, where the serialized data is picked up by the QCMetrix interface and delivered to
+the nurse/surgeon lead for their use. The data pertains to surgical procedures performed for patient enounters at a given
+site. The QCMetrix interface consumes this data and puts a response file. The response is processed and stored into the
+database asynchronously. Reports on data exchange could be generated.</p>
+<img alt="_images/process.png" src="_images/process.png" />
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="install.html" class="btn btn-neutral float-right" title="Installation" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="South Carolina Surgical Quality Collaborative" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Venkat Kaushik.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

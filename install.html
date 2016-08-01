@@ -1,0 +1,373 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Installation &mdash; scsqc 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="scsqc 1.0 documentation" href="index.html"/>
+        <link rel="next" title="Reference Guide" href="refguide.html"/>
+        <link rel="prev" title="Architecture" href="archd.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> scsqc
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="archd.html">Architecture</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#environment">Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#source-code">Source Code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#application-server-setup">Application Server Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#oracle-client-libraries">Oracle client libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-user-group">Create user/group</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#virtual-environment">Virtual environment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#client-side-wallet">Client-side wallet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sftp-server-public-key">SFTP server public key</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#install-scsqc">Install <code class="docutils literal"><span class="pre">scsqc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configure-scsqc">Configure <code class="docutils literal"><span class="pre">scsqc</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="refguide.html">Reference Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devtest.html">Production Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">scsqc</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Installation</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/install.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="environment">
+<h2>Environment<a class="headerlink" href="#environment" title="Permalink to this headline">¶</a></h2>
+<p>Oracle Enterprise Linux OS (&gt;= 6.8) is the default operating system in production.</p>
+<dl class="docutils">
+<dt>Application requires the following minimal prerequisites</dt>
+<dd><ol class="first last arabic simple">
+<li>Virtual environment (Python &gt;= 2.7)</li>
+<li>Database API (cx_Oracle &gt;= 5.1)</li>
+<li>Oracle client libraries (instantclient -basic, -devel and -sqlplus, each &gt;= 12.1)</li>
+<li>Git client (for checking out the application code from repository)</li>
+</ol>
+</dd>
+</dl>
+</div>
+<hr class="docutils" />
+<div class="section" id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">scsqc</span></code> source code is available in <a class="reference external" href="https://github.com/HSSC/scsqc/">HSSC/scsqc</a> repository.</dt>
+<dd><ul class="first last simple">
+<li>For <em>production</em>, check out the latest <code class="docutils literal"><span class="pre">stable</span></code> release from github.</li>
+<li>For <em>development</em> use the latest <code class="docutils literal"><span class="pre">dev</span></code> branch.</li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Due to protected nature of data it serves (<em>i.e.,</em> PHI), <code class="docutils literal"><span class="pre">scsqc</span></code> is <strong>not</strong> available on Pypi.</p>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="application-server-setup">
+<h2>Application Server Setup<a class="headerlink" href="#application-server-setup" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
+<p>In production, it is best to setup the application to run in a virtual environment.
+Using a virtual environment helps avoid clutter in our system-wide libraries which
+have Python 2.6 on OEL 6.8 operating system. Install <a class="reference external" href="http://git-scm.com/">Git</a> in order to clone the repository.
+Obtain <a class="reference external" href="http://git-scm.com/">Git</a>, <a class="reference external" href="http://www.python.org/">Python</a> and <a class="reference external" href="http://pypi.python.org/pypi/virtualenv">virtualenv</a> if you do not already have them.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<dl class="last docutils">
+<dt>You have to do this (and once only) if you are:</dt>
+<dd><ul class="first last simple">
+<li>setting up a new production app server     <em>OR</em></li>
+<li>upgrading the prerequisite packages     <em>OR</em></li>
+<li>upgrading the operating system</li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Some of the steps below require root access. Ask Clemson IT support to set it up for you
+or request admin access to app server if you want to do it yourself.
+Install <strong>Python version &gt;= 2.7</strong> (if your OS does not already ship with it)</p>
+</div>
+</div>
+<div class="section" id="oracle-client-libraries">
+<span id="oracle-client-libs"></span><h3>Oracle client libraries<a class="headerlink" href="#oracle-client-libraries" title="Permalink to this headline">¶</a></h3>
+<p>Install the Oracle client libraries. You have to copy
+the RPM&#8217;s from the Oracle Support Network <a class="reference external" href="http://www.oracle.com/technetwork/topics/linuxx86-64soft-092277.html">website</a> by accepting their
+license agreement, downloading the RPM&#8217;s locally and copying them over to the application server in production.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo su -
+rpm -ivh oracle-instantclient12.1-basic-12.1.0.2.0-1.x86_64.rpm
+rpm -ivh oracle-instantclient12.1-sqlplus-12.1.0.2.0-1.x86_64.rpm
+rpm -ivh oracle-instantclient12.1-devel-12.1.0.2.0-1.x86_64.rpm
+</pre></div>
+</div>
+</div>
+<div class="section" id="create-user-group">
+<h3>Create user/group<a class="headerlink" href="#create-user-group" title="Permalink to this headline">¶</a></h3>
+<p>Create a user:group <cite>scsqc:scsqc</cite> with a home directory and login shell</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo su -
+useradd -m -d /home/scsqc -s /bin/bash -c <span class="s2">&quot;creating user scsqc&quot;</span> -U scsqc
+usermod -G scsqc scsqc
+</pre></div>
+</div>
+</div>
+<div class="section" id="virtual-environment">
+<h3>Virtual environment<a class="headerlink" href="#virtual-environment" title="Permalink to this headline">¶</a></h3>
+<p>Create a virtual environment <cite>sqcenv</cite> and activate it</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo su -
+<span class="nb">cd</span> /home/scsqc
+pip2.7 install virtualenv
+virtualenv -p /usr/bin/python2.7 sqcenv
+<span class="nb">source</span> /home/scsqc/sqcenv/bin/activate
+pip install -r /home/scsqc/prod.requirements.txt
+</pre></div>
+</div>
+</div>
+<div class="section" id="client-side-wallet">
+<span id="id1"></span><h3>Client-side wallet<a class="headerlink" href="#client-side-wallet" title="Permalink to this headline">¶</a></h3>
+<p>Ask the DBA to setup a <a class="reference external" href="https://docs.oracle.com/cd/B28359_01/network.111/b28530/asowalet.htm#i1011255">client-side Oracle Wallet</a>.
+This requires creating a wallet (using Oracle Wallet Manager),
+setting up the wallet files, setting file/directory permissions, the
+local naming parameters (tnsnames.ora) and profile configuration
+file (sqlnet.ora). This is required for application to be able to
+communicate with the Oracle database. If setup properly, the Oracle API (cx_Oracle) will be
+able to establish a connection using a service name (string).</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>-rw-r--r--. <span class="m">1</span> scsqc scsqc  /usr/local/share/qcmetrix/sqlnet.ora
+-rw-r--r--. <span class="m">1</span> scsqc scsqc  /usr/local/share/qcmetrix/tnsnames.ora
+
+-rw-------. <span class="m">1</span> scsqc scsqc  /usr/local/share/qcmetrix/scsqc.wxt/cwallet.sso
+-rw-r--r--. <span class="m">1</span> scsqc scsqc  /usr/local/share/qcmetrix/scsqc.wxt/cwallet.sso.lck
+-rw-------. <span class="m">1</span> scsqc scsqc  /usr/local/share/qcmetrix/scsqc.wxt/ewallet.p12
+-rw-r--r--. <span class="m">1</span> scsqc scsqc  /usr/local/share/qcmetrix/scsqc.wxt/ewallet.p12.lck
+</pre></div>
+</div>
+</div>
+<div class="section" id="sftp-server-public-key">
+<span id="sftp-server-key"></span><h3>SFTP server public key<a class="headerlink" href="#sftp-server-public-key" title="Permalink to this headline">¶</a></h3>
+<p>Public key of the sFTP server must be installed on the app server in the home directory with proper permissions.
+This allows the application to communicate with the sFTP host.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>-r--------. <span class="m">1</span> scsqc scsqc /path/to/sftp/public.key
+</pre></div>
+</div>
+</div>
+<div class="section" id="install-scsqc">
+<h3>Install <code class="docutils literal"><span class="pre">scsqc</span></code><a class="headerlink" href="#install-scsqc" title="Permalink to this headline">¶</a></h3>
+<p>To setup a stable release of scsqc, do the following</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1">## Get and unpack a stable release</span>
+sudo su -
+<span class="nb">cd</span> /home/scsqc
+tar -zxf scsqc-&lt;version&gt;.tar.gz
+<span class="nb">cd</span> scsqc
+
+<span class="c1">## Run tests</span>
+nosetests
+
+<span class="c1">## Build, test and install</span>
+python setup.py build
+python setup.py <span class="nb">test</span>
+python setup.py install
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">If the nosetests fail, the application will fail to run. Fix problems with the environment and re-run the tests.
+Make sure all the tests pass before installing.</p>
+</div>
+</div>
+<div class="section" id="configure-scsqc">
+<h3>Configure <code class="docutils literal"><span class="pre">scsqc</span></code><a class="headerlink" href="#configure-scsqc" title="Permalink to this headline">¶</a></h3>
+<p>Application configuration is installed in a default location.
+Reasonable values are provided for the parameters. Modify as
+required.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>-rw-r--r--. <span class="m">1</span> scsqc scsqc /usr/local/etc/qcmetrix/qcmetrix.conf
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="refguide.html" class="btn btn-neutral float-right" title="Reference Guide" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="archd.html" class="btn btn-neutral" title="Architecture" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Venkat Kaushik.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
